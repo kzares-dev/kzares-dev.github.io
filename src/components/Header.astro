@@ -1,32 +1,100 @@
 ---
+import { Github, Search, Moon, Sun } from "@lucide/astro";
 import { SITE_TITLE } from "../consts";
 import HeaderLink from "./HeaderLink.astro";
 
 const quickLinks = [
 	{ name: "Home", href: "/" },
-	{ name: "Blog", href: "/blog" },
+	{ name: "Collections", href: "/collections" },
+	{ name: "Posts", href: "/blog" },
 	{ name: "About", href: "/about" },
 ];
 ---
 
 <header class="w-full py-10">
-	<nav class="flex items-center justify-center flex-row gap-10">
-		<h2 class="text-2xl"><a href="/">{SITE_TITLE}</a></h2>
-		<div class="flex-1 border-border border rounded-full px-15 py-3">
+	<nav class="flex items-center justify-center flex-row gap-4">
+		<h2 class="text-2xl mr-6"><a href="/">{SITE_TITLE}</a></h2>
+		<div
+			class="flex-1 h-11 flex-row justify-between flex items-center border-black/30 border rounded-full py-0 pl-15 overflow-hidden"
+		>
 			<div class="flex flex-row gap-4 items-center">
-				<HeaderLink href="/">Home</HeaderLink>
-				<div class="w-1 h-1 rounded-full bg-black"></div>
-				<HeaderLink href="/blog">Blog</HeaderLink>
-				<div class="w-1 h-1 rounded-full bg-black"></div>
-				<HeaderLink href="/collections">Collections</HeaderLink>
-				<div class="w-1 h-1 rounded-full bg-black"></div>
-				<HeaderLink href="/categories">Categories</HeaderLink>
-				<div class="w-1 h-1 rounded-full bg-black"></div>
-				<HeaderLink href="/services">Services</HeaderLink>
-				<div class="w-1 h-1 rounded-full bg-black"></div>
-				<HeaderLink href="/about">About</HeaderLink>
+				{
+					quickLinks.map((link, index) => (
+						<>
+							<HeaderLink href={link.href}>
+								{link.name}
+							</HeaderLink>
+							{index < quickLinks.length - 1 && (
+								<div class="w-1 h-1 rounded-full bg-black" />
+							)}
+						</>
+					))
+				}
+			</div>
+			<div class="m-1 aspect-square h-9 flex items-center justify-center bg-primary rounded-full">
+				<Github size={18} />
 			</div>
 		</div>
+		<div class="flex flex-row gap-2 items-center bg-card border-border border  px-3 rounded-full h-11">
+			<Search size={20} />
+			<input
+				class="text-sm border-none outline-none bg-transparent placeholder-black focus:ring-0 px-3"
+				placeholder="Search topic...."
+				type="text"
+				name="search"
+				id="search"
+			/>
+		</div>
+		<button id="theme-toggle" class="flex items-center justify-center w-11 h-11 bg-card border-border border rounded-full hover:bg-primary/10 transition-colors">
+			<Sun id="sun-icon" size={20} class="block" />
+			<Moon id="moon-icon" size={20} class="hidden" />
+		</button>
 		<div class=""></div>
 	</nav>
 </header>
+
+<script>
+	function initTheme() {
+		const htmlElement = document.documentElement;
+		const themeToggle = document.getElementById('theme-toggle');
+		const sunIcon = document.getElementById('sun-icon');
+		const moonIcon = document.getElementById('moon-icon');
+
+		// Get saved theme or check system preference
+		const savedTheme = localStorage.getItem('theme');
+		const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+		const isDark = savedTheme === 'dark' || (savedTheme === null && prefersDark);
+
+		// Apply initial theme
+		if (isDark) {
+			htmlElement.classList.add('dark');
+			sunIcon?.classList.add('hidden');
+			moonIcon?.classList.remove('hidden');
+		} else {
+			htmlElement.classList.remove('dark');
+			sunIcon?.classList.remove('hidden');
+			moonIcon?.classList.add('hidden');
+		}
+
+		// Theme toggle handler
+		themeToggle?.addEventListener('click', () => {
+			const isDarkMode = htmlElement.classList.contains('dark');
+
+			if (isDarkMode) {
+				htmlElement.classList.remove('dark');
+				localStorage.setItem('theme', 'light');
+				sunIcon?.classList.remove('hidden');
+				moonIcon?.classList.add('hidden');
+			} else {
+				htmlElement.classList.add('dark');
+				localStorage.setItem('theme', 'dark');
+				sunIcon?.classList.add('hidden');
+				moonIcon?.classList.remove('hidden');
+			}
+		});
+	}
+
+	// Initialize theme on page load and on navigation
+	initTheme();
+	document.addEventListener('astro:after-swap', initTheme);
+</script>

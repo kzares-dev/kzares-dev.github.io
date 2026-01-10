@@ -1,0 +1,104 @@
+---
+import { ArrowRight } from "@lucide/astro";
+import { Image } from "astro:assets";
+
+interface Props {
+    posts: any[];
+}
+
+const { posts } = Astro.props;
+const mainPost = posts[0];
+const otherPosts = posts.slice(1);
+---
+
+<div class="w-full rounded-lg overflow-hidden">
+    <div class="flex flex-col gap-4 p-6">
+        <div class="flex items-center gap-4">
+            <h1 class="text-[6rem] font-bold italic text-stone-800">
+                Latest Articles
+            </h1>
+            <h2 class="flex gap-2 mt-10 text-lg items-center">
+                See all <ArrowRight size={15} />
+            </h2>
+        </div>
+
+        {/* Main Featured Post */}
+        {
+            mainPost && (
+                <a
+                    href={`/blog/${mainPost.slug}`}
+                    class="group flex gap-6 bg-gradient-to-r from-primary/10 to-transparent overflow-hidden shadow-lg hover:shadow-xl transition-shadow"
+                >
+                    {/* Content - Left Side */}
+                    <div class="flex flex-col justify-between p-8 w-1/3 py-10">
+                        <div>
+                            <span class="inline-block bg-primary/80 px-3 py-1 rounded-full text-xs font-semibold mb-4 text-white">
+                                Featured
+                            </span>
+                            <h3 class="text-4xl font-bold line-clamp-3 group-hover:text-primary transition-colors">
+                                {mainPost.title}
+                            </h3>
+                            <p class="text-base mt-4 opacity-90 line-clamp-3">
+                                {mainPost.description}
+                            </p>
+                        </div>
+                        <time class="text-sm opacity-75 block">
+                            {mainPost.pubDate.toLocaleDateString("es-ES")}
+                        </time>
+                    </div>
+
+                    {/* Image - Right Side */}
+                    <div class="flex-1 overflow-hidden">
+                        {mainPost.heroImage && (
+                            <Image
+                                src={mainPost.heroImage}
+                                alt={mainPost.title}
+                                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                            />
+                        )}
+                    </div>
+                </a>
+            )
+        }
+
+        {/* Other Posts Grid */}
+        {
+            otherPosts.length > 0 && (
+                <div class="mt-10">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {otherPosts.splice(0,3).map((post) => (
+                            <a
+                                href={`/blog/${post.slug}`}
+                                class="group relative overflow-hidden rounded-lg aspect-video"
+                            >
+                                {/* Image covering entire card */}
+                                {post.heroImage && (
+                                    <Image
+                                        src={post.heroImage}
+                                        alt={post.title}
+                                        class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                    />
+                                )}
+
+                                {/* Gradient overlay for readability */}
+
+                                {/* Content positioned absolute */}
+                                <div class="absolute inset-0 flex flex-col justify-end p-6">
+                                    <h4 class="text-2xl font-bold text-white group-hover:text-primary transition-colors duration-300 line-clamp-2">
+                                        {post.title}
+                                    </h4>
+                                    <p class="text-sm text-white/80 mt-2 line-clamp-2">
+                                        {post.description}
+                                    </p>
+                                    <time class="text-xs text-white/70 mt-3 block">
+                                        {post.pubDate.toLocaleDateString("es-ES")}
+                                    </time>
+                                </div>
+                            </a>
+                        ))}
+                    </div>
+                </div>
+            )
+        }
+    </div>
+</div>
