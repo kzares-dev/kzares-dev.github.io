@@ -5,10 +5,10 @@ import { Clock, Eye } from "@lucide/astro";
 
 interface Props {
 	posts: CollectionEntry<"blog">[];
-	initialCols?: number;
+	cols?: string;
 }
 
-const { posts, initialCols=2 } = Astro.props;
+const { posts, cols } = Astro.props;
 
 // Calculate reading time (roughly 200 words per minute)
 const calculateReadingTime = (content: string): number => {
@@ -21,7 +21,7 @@ const calculateReadingTime = (content: string): number => {
 
 	{posts.length > 0 ? (
 		<div>
-				<ul class={`grid gap-8 grid-cols-1 sm:grid-cols-${initialCols}`}>
+				<ul class={`grid gap-8 ${ !cols ? "grid-cols-1 sm:grid-cols-2" : `grid-cols-1  ${cols}` }`}>
 					{
 						posts.map((post) => (
 							<li class="bg-background border border-border shadow-sm min-h-120 overflow-hidden hover:shadow-md transition-shadow group">
