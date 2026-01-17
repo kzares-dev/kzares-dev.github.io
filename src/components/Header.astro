@@ -166,13 +166,9 @@ const quickLinks = [
 		const sunIcon = document.getElementById("sun-icon");
 		const moonIcon = document.getElementById("moon-icon");
 
-		// Get saved theme or check system preference
+		// Get saved theme or default to light
 		const savedTheme = localStorage.getItem("theme");
-		const prefersDark = window.matchMedia(
-			"(prefers-color-scheme: dark)",
-		).matches;
-		const isDark =
-			savedTheme === "dark" || (savedTheme === null && prefersDark);
+		const isDark = savedTheme === "dark";
 
 		// Apply initial theme
 		if (isDark) {
