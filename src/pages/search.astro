@@ -1,0 +1,284 @@
+---
+import { getCollection } from "astro:content";
+import Footer from "../components/Footer.astro";
+import Header from "../components/Header.astro";
+import Layout from "../layouts/Layout.astro";
+import CollectionSection from "../components/CollectionSection.astro";
+import {
+	Search,
+	AlertCircle,
+	FileText,
+	Folder,
+	ArrowRight,
+} from "@lucide/astro";
+
+export const prerender = false;
+
+// Get query parameter from URL
+const query = Astro.url.searchParams.get("query") || "";
+const searchTerm = query.toLowerCase().trim();
+
+// Get all posts and collections
+const posts = (await getCollection("blog")).sort(
+	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+
+const collections = (await getCollection("category")).sort((a, b) =>
+	a.data.title.localeCompare(b.data.title),
+);
+
+// Group posts by collection
+const postsByCollection = new Map();
+for (const collection of collections) {
+	const collectionId = collection.id.replace(".md", "");
+	postsByCollection.set(
+		collectionId,
+		posts.filter((p) => p.data.collection === collectionId),
+	);
+}
+
+// Filter posts by search term
+const filteredPosts = searchTerm
+	? posts.filter(
+			(post) =>
+				post.data.title.toLowerCase().includes(searchTerm) ||
+				post.data.description?.toLowerCase().includes(searchTerm) ||
+				post.body.toLowerCase().includes(searchTerm),
+		)
+	: [];
+
+// Filter collections by search term
+const filteredCollections = searchTerm
+	? collections.filter(
+			(collection) =>
+				collection.data.title.toLowerCase().includes(searchTerm) ||
+				collection.data.description?.toLowerCase().includes(searchTerm),
+		)
+	: [];
+
+const hasResults = filteredPosts.length > 0 || filteredCollections.length > 0;
+---
+
+<Layout>
+	<Header />
+	<main class="px-4 py-5">
+		<div class="mb-12 text-center">
+			<div
+				class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[rgb(251,239,239)] mb-4"
+			>
+				<Search size={18} class="text-[rgb(245,175,175)]" />
+				<span class="text-sm font-semibold text-[rgb(245,175,175)]"
+					>Search Results</span
+				>
+			</div>
+			<h1 class="text-4xl sm:text-5xl font-bold mb-4 leading-tight">
+				Search Results for <span
+					class="bg-gradient-to-r from-[rgb(245,175,175)] to-[rgb(220,100,100)] bg-clip-text text-transparent"
+					>"{query}"</span
+				>
+			</h1>
+			<p class="text-gray-600 text-lg mb-8">
+				Found {filteredCollections.length}
+				{
+					filteredCollections.length === 1
+						? "collection"
+						: "collections"
+				} and {filteredPosts.length}
+				{filteredPosts.length === 1 ? "article" : "articles"}
+			</p>
+
+			<div
+				class="flex flex-row gap-2 items-center bg-card px-4 rounded-full h-12 max-w-[500px] w-full mx-auto hover:border-[rgb(220,100,100)] transition-colors mb-8"
+			>
+				<Search size={20} />
+				<form
+					id="refine-search-form"
+					class="w-full"
+					onsubmit="handleRefineSearch(event)"
+				>
+					<input
+						class="text-sm flex-1 border-none outline-none bg-transparent placeholder-gray-400 focus:ring-0 w-full"
+						placeholder="Refine search..."
+						type="text"
+						name="query"
+						value={query}
+					/>
+				</form>
+			</div>
+		</div>
+
+		{
+			!searchTerm && (
+				<div class="max-w-2xl mx-auto mb-12 bg-blue-50 border border-blue-200 rounded-lg p-6 flex gap-4">
+					<AlertCircle
+						size={24}
+						class="text-blue-600 flex-shrink-0 mt-1"
+					/>
+					<div>
+						<h3 class="font-semibold text-blue-900 mb-2">
+							Enter a search term
+						</h3>
+						<p class="text-blue-800">
+							Use the search bar at the top to search for
+							collections and articles.
+						</p>
+					</div>
+				</div>
+			)
+		}
+
+		{
+			searchTerm && !hasResults && (
+				<div class="max-w-2xl mx-auto mb-12 bg-card border border-primary rounded-lg p-6 flex gap-4">
+					<AlertCircle
+						size={24}
+						class="text-amber-800 flex-shrink-0 mt-1"
+					/>
+					<div>
+						<h3 class="font-semibold text-amber-800 mb-2">
+							No results found
+						</h3>
+						<p class="text-amber-800">
+							No collections or articles match your search for "
+							{query}". Try a different search term.
+						</p>
+					</div>
+				</div>
+			)
+		}
+
+		{
+			hasResults && (
+				<div class="space-y-12">
+					{filteredCollections.length > 0 && (
+						<section>
+							<div class="mb-8">
+								<div class="flex items-center gap-3 mb-6">
+									<Folder
+										size={24}
+										class="text-[rgb(220,100,100)]"
+									/>
+									<h2 class="text-3xl font-bold">
+										Collections
+									</h2>
+									<span class="text-sm font-semibold bg-[rgb(245,175,175)] text-white px-3 py-1 rounded-full">
+										{filteredCollections.length}
+									</span>
+								</div>
+								<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+									{filteredCollections.map((collection) => {
+										const collectionId =
+											collection.id.replace(".md", "");
+										const collectionPosts =
+											postsByCollection.get(
+												collectionId,
+											) || [];
+
+										return (
+											<div class="relative h-130 -mb-10">
+												<a
+													href={`/collections/${collectionId}/`}
+													class={`group relative bg-card z-11 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between p-8 text-stone-800 min-h-84`}
+												>
+													{/* Background accent */}
+													<div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-300" />
+
+													<div class="relative z-10">
+														<h2 class="text-3xl font-bold mb-3 italic text-[rgb(220,100,100)]">
+															{
+																collection.data
+																	.title
+															}
+														</h2>
+														<p class="text-stone-900/90">
+															{
+																collection.data
+																	.description
+															}
+														</p>
+													</div>
+
+													<div class="relative z-10 flex items-center justify-between pt-6 border-t border-stone-800/20">
+														<div class="text-sm font-semibold text-stone-900">
+															<span class="font-bold text-lg">
+																{
+																	collectionPosts.length
+																}
+															</span>
+															<span class="text-stone-900/80 ml-1">
+																{collectionPosts.length ===
+																1
+																	? "article"
+																	: "articles"}
+															</span>
+														</div>
+														<div class="group-hover:translate-x-1 transition-transform duration-300">
+															<ArrowRight
+																size={20}
+																class="text-stone-900"
+															/>
+														</div>
+													</div>
+												</a>
+
+												<div class="flex flex-col bg-primary/70 p-4 space-y-2">
+													{collectionPosts
+														.slice(0, 4)
+														.map(
+															(
+																post: any,
+																idx: number,
+															) => (
+																<div class="w-full text-sm font-bold">
+																	{
+																		post
+																			.data
+																			.title
+																	}
+																</div>
+															),
+														)}
+												</div>
+											</div>
+										);
+									})}
+								</div>
+							</div>
+						</section>
+					)}
+
+					{filteredPosts.length > 0 && (
+						<section>
+							<div class="flex items-center gap-3 mb-6">
+								<FileText
+									size={24}
+									class="text-[rgb(220,100,100)]"
+								/>
+								<h2 class="text-3xl font-bold">Articles</h2>
+								<span class="text-sm font-semibold bg-[rgb(245,175,175)] text-white px-3 py-1 rounded-full">
+									{filteredPosts.length}
+								</span>
+							</div>
+							<CollectionSection
+								cols={"md:grid-cols-2 lg:grid-cols-3"}
+								posts={filteredPosts}
+							/>
+						</section>
+					)}
+				</div>
+			)
+		}
+	</main>
+	<Footer />
+</Layout>
+
+<script is:inline>
+	function handleRefineSearch(event) {
+		event.preventDefault();
+		const form = event.target;
+		const newQuery = form.querySelector('input[name="query"]').value.trim();
+		if (newQuery) {
+			window.location.href = `/search?query=${encodeURIComponent(newQuery)}`;
+		}
+	}
+</script>

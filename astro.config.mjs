@@ -10,9 +10,10 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   site: 'https://example.com',
   integrations: [mdx(), sitemap()],
+  output: 'static',
   markdown: {
- shikiConfig: {
-      theme: 'github-dark', 
+    shikiConfig: {
+      theme: 'github-dark',
       wrap: true,
     },
   },

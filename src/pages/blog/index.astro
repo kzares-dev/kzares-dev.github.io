@@ -2,60 +2,211 @@
 import { getCollection } from "astro:content";
 import Footer from "../../components/Footer.astro";
 import Header from "../../components/Header.astro";
-import { SITE_DESCRIPTION, SITE_TITLE } from "../../consts";
 import Layout from "../../layouts/Layout.astro";
 import CollectionSection from "../../components/CollectionSection.astro";
+import { AlertCircle, BookOpen, Search } from "@lucide/astro";
 
 const posts = (await getCollection("blog")).sort(
 	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
 );
 
-const collections = (await getCollection("category")).sort(
-	(a, b) => a.data.title.localeCompare(b.data.title),
-);
-
-// Agrupar posts por colección
-const postsByCollection = new Map();
-for (const collection of collections) {
-	const collectionId = collection.id.replace('.md', '');
-	postsByCollection.set(collectionId, posts.filter(p => p.data.collection === collectionId));
-}
+const POSTS_PER_PAGE = 9;
 ---
 
 <Layout>
 	<Header />
-	<main>
-		<div class="blog-header">
-			<h1>Blog</h1>
-			<p>Últimos artículos</p>
+	<main class="px-4 py-5">
+		<div class="mb-12 text-center">
+			<div
+				class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[rgb(251,239,239)] mb-4"
+			>
+				<BookOpen size={18} class="text-[rgb(245,175,175)]" />
+				<span class="text-sm font-semibold text-[rgb(245,175,175)]"
+					>Blog</span
+				>
+			</div>
+			<h1 class="text-5xl sm:text-6xl font-bold mb-4 leading-tight">
+				Latest <span
+					class="bg-gradient-to-r from-[rgb(245,175,175)] to-[rgb(220,100,100)] bg-clip-text text-transparent"
+					>Articles</span
+				>
+			</h1>
+			<p class="text-gray-600 text-lg max-w-2xl mx-auto mb-8">
+				Discover our latest posts and insights
+			</p>
+
+			<div
+				class="flex flex-row gap-2 items-center bg-card px-4 rounded-full h-12 max-w-[500px] w-full mx-auto hover:border-[rgb(220,100,100)] transition-colors"
+			>
+				<Search size={20} />
+				<input
+					class="text-sm flex-1 border-none outline-none bg-transparent placeholder-gray-400 focus:ring-0 w-full"
+					placeholder="Search articles..."
+					type="text"
+					id="blog-search"
+				/>
+			</div>
 		</div>
-		{
-			collections.map((collection) => {
-				const collectionId = collection.id.replace('.md', '');
-				const collectionPosts = postsByCollection.get(collectionId) || [];
-				return (
-					<CollectionSection collection={collection} posts={collectionPosts} />
-				);
-			})
-		}
+
+		<!-- No results message -->
+		<div
+			id="no-results-message"
+			class="max-w-2xl mx-auto mb-12 bg-card border border-primary rounded-lg p-6 flex gap-4 hidden"
+		>
+			<AlertCircle
+				size={24}
+				class="text-amber-800 flex-shrink-0 mt-1"
+			/>
+			<div>
+				<h3 class="font-semibold text-amber-800 mb-2">
+					No results found
+				</h3>
+				<p class="text-amber-800">
+					No articles match your search. Try a different search term.
+				</p>
+			</div>
+		</div>
+
+		<div id="blog-container">
+			
+			<CollectionSection
+				cols={"md:grid-cols-2 lg:grid-cols-3"}
+				posts={posts}
+			/>
+		</div>
+
+		<!-- Pagination -->
+		<div class="flex justify-center gap-2 mt-12" id="pagination"></div>
 	</main>
 	<Footer />
 </Layout>
 
-<style>
-	.blog-header {
-		text-align: center;
-		margin-bottom: 3rem;
-		padding: 2rem 0;
+<script
+	is:inline
+	define:vars={{
+		postsJson: JSON.stringify(posts),
+		postsPerPage: POSTS_PER_PAGE,
+	}}
+>
+	let allPosts = JSON.parse(postsJson);
+	let filteredPosts = allPosts;
+	let currentPage = 1;
+	let currentSearchTerm = "";
+
+	const searchInput = document.getElementById("blog-search");
+	const blogContainer = document.getElementById("blog-container");
+	const paginationContainer = document.getElementById("pagination");
+	const noResultsMessage = document.getElementById("no-results-message");
+
+	function renderPosts() {
+		const startIdx = (currentPage - 1) * postsPerPage;
+		const endIdx = startIdx + postsPerPage;
+		const postsToShow = filteredPosts.slice(startIdx, endIdx);
+
+		const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
+
+		// Show/hide no results message
+		if (currentSearchTerm && filteredPosts.length === 0) {
+			noResultsMessage.classList.remove("hidden");
+			blogContainer.style.display = "none";
+			paginationContainer.innerHTML = "";
+		} else {
+			noResultsMessage.classList.add("hidden");
+			blogContainer.style.display = "";
+		}
+
+		// Update pagination
+		paginationContainer.innerHTML = "";
+
+		if (totalPages > 1) {
+			// Previous button
+			const prevBtn = document.createElement("button");
+			prevBtn.textContent = "← Previous";
+			prevBtn.disabled = currentPage === 1;
+			prevBtn.className = `px-4 py-2 rounded transition-colors ${
+				currentPage === 1
+					? "bg-gray-200 text-gray-400 cursor-not-allowed"
+					: "bg-[rgb(220,100,100)] text-white hover:bg-[rgb(200,70,70)]"
+			}`;
+			prevBtn.onclick = () => {
+				if (currentPage > 1) {
+					currentPage--;
+					renderPosts();
+					window.scrollTo({ top: 0, behavior: "smooth" });
+				}
+			};
+			paginationContainer.appendChild(prevBtn);
+
+			// Page numbers
+			for (let i = 1; i <= totalPages; i++) {
+				const pageBtn = document.createElement("button");
+				pageBtn.textContent = i;
+				pageBtn.className = `px-3 py-2 rounded transition-colors ${
+					i === currentPage
+						? "bg-[rgb(220,100,100)] text-white"
+						: "bg-card border border-border hover:border-[rgb(220,100,100)]"
+				}`;
+				pageBtn.onclick = () => {
+					currentPage = i;
+					renderPosts();
+					window.scrollTo({ top: 0, behavior: "smooth" });
+				};
+				paginationContainer.appendChild(pageBtn);
+			}
+
+			// Next button
+			const nextBtn = document.createElement("button");
+			nextBtn.textContent = "Next →";
+			nextBtn.disabled = currentPage === totalPages;
+			nextBtn.className = `px-4 py-2 rounded transition-colors ${
+				currentPage === totalPages
+					? "bg-gray-200 text-gray-400 cursor-not-allowed"
+					: "bg-[rgb(220,100,100)] text-white hover:bg-[rgb(200,70,70)]"
+			}`;
+			nextBtn.onclick = () => {
+				if (currentPage < totalPages) {
+					currentPage++;
+					renderPosts();
+					window.scrollTo({ top: 0, behavior: "smooth" });
+				}
+			};
+			paginationContainer.appendChild(nextBtn);
+
+			// Results counter
+			const counter = document.createElement("span");
+			counter.textContent = `Page ${currentPage} of ${totalPages}`;
+			counter.className = "px-4 py-2 text-gray-600";
+			paginationContainer.appendChild(counter);
+		}
+
+		// Update blog posts display
+		const postsList = blogContainer.querySelector("ul");
+		if (postsList) {
+			const items = postsList.querySelectorAll("li");
+			items.forEach((item, idx) => {
+				item.style.display = idx < postsToShow.length ? "" : "none";
+			});
+		}
 	}
 
-	.blog-header h1 {
-		font-size: 2.5rem;
-		margin-bottom: 0.5rem;
-	}
+	searchInput.addEventListener("input", (e) => {
+		const searchTerm = e.target.value.toLowerCase().trim();
+		currentSearchTerm = searchTerm;
 
-	.blog-header p {
-		font-size: 1.1rem;
-		color: #666;
-	}
-</style>
+		if (searchTerm === "") {
+			filteredPosts = allPosts;
+		} else {
+			filteredPosts = allPosts.filter(
+				(post) =>
+					post.data.title.toLowerCase().includes(searchTerm) ||
+					post.data.description.toLowerCase().includes(searchTerm),
+			);
+		}
+
+		currentPage = 1;
+		renderPosts();
+	});
+
+	// Initial render
+	renderPosts();
+</script>

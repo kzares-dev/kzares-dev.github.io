@@ -3,8 +3,8 @@ import { getCollection } from "astro:content";
 import Footer from "../../components/Footer.astro";
 import Header from "../../components/Header.astro";
 import Layout from "../../layouts/Layout.astro";
-import CollectionSection from "../../components/CollectionSection.astro";
-import { Search, Folder, ArrowRight } from "@lucide/astro";
+import CollectionsSearch from "../../components/CollectionsSearch.astro";
+import { Folder, ArrowRight } from "@lucide/astro";
 
 const posts = (await getCollection("blog")).sort(
 	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
@@ -45,28 +45,17 @@ const getGradient = (index: number) => gradients[index % gradients.length];
 			<h1 class="text-5xl sm:text-6xl font-bold mb-4 leading-tight">
 				Browse by <span
 					class="bg-gradient-to-r from-[rgb(245,175,175)] to-[rgb(220,100,100)] bg-clip-text text-transparent"
-					>Category</span
+					>Collections</span
 				>
 			</h1>
 			<p class="text-gray-600 text-lg max-w-2xl mx-auto mb-8">
 				Explore our content organized by topics to find exactly what
 				you're looking for
 			</p>
-			<div
-				class="flex flex-row gap-2 items-center bg-card px-4 rounded-full h-12 max-w-[500px] w-full mx-auto hover:border-[rgb(220,100,100)] transition-colors"
-			>
-				<Search size={20} />
-				<input
-					class="text-sm flex-1 border-none outline-none bg-transparent placeholder-gray-400 focus:ring-0"
-					placeholder="Search collections..."
-					type="text"
-					name="search"
-					id="search"
-				/>
-			</div>
+			<CollectionsSearch />
 		</div>
 
-		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="collections-grid">
 			{
 				collections.map((collection, collectionIdx) => {
 					const collectionId = collection.id.replace(".md", "");
@@ -74,7 +63,7 @@ const getGradient = (index: number) => gradients[index % gradients.length];
 						postsByCollection.get(collectionId) || [];
 
 					return (
-						<div class="relative h-130  -mb-10">
+						<div class="relative h-130 -mb-10 collection-card" data-collection-title={collection.data.title.toLowerCase()} data-collection-description={collection.data.description.toLowerCase()}>
 							
 							<a
 								href={`/collections/${collectionId}/`}

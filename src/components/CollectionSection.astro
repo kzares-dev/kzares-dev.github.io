@@ -24,7 +24,7 @@ const calculateReadingTime = (content: string): number => {
 				<ul class={`grid gap-8 ${ !cols ? "grid-cols-1 sm:grid-cols-2" : `grid-cols-1  ${cols}` }`}>
 					{
 						posts.map((post) => (
-							<li class="bg-background border border-border shadow-sm min-h-120 overflow-hidden hover:shadow-md transition-shadow group">
+							<li class="bg-background border border-border shadow-sm min-h-100 overflow-hidden hover:shadow-md transition-shadow group">
 								<a href={`/blog/${post.id}/`} class="block h-full">
 									{post.data.heroImage && (
 										<div class="w-full h-48 overflow-hidden bg-gray-100 relative">

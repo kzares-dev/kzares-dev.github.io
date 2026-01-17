@@ -1,5 +1,5 @@
 ---
-import { Github, Search, Moon, Sun } from "@lucide/astro";
+import { Github, Search, Menu, X, Moon, Sun } from "@lucide/astro";
 import { SITE_TITLE } from "../consts";
 import HeaderLink from "./HeaderLink.astro";
 
@@ -11,12 +11,13 @@ const quickLinks = [
 ];
 ---
 
-<header class="w-full py-10">
-	<nav class="flex items-center justify-center flex-row gap-4">
-		<h2 class="text-2xl mr-6"><a href="/">{SITE_TITLE}</a></h2>
-		<div
-			class="flex-1 h-11 flex-row justify-between flex items-center border-black/30 border rounded-full py-0 pl-15 overflow-hidden"
-		>
+<header class="w-full py-4 md:py-6 sticky top-0 bg-background backdrop-blur-md z-50">
+	<nav class="flex items-center justify-between flex-row gap-4 px-3">
+		<!-- Logo -->
+		<h2 class="text-2xl"><a href="/">{SITE_TITLE}</a></h2>
+
+		<!-- Desktop Navigation -->
+		<div class="hidden md:flex flex-1 h-11 flex-row justify-between items-center border-black/30 border rounded-full py-0 pl-15 overflow-hidden">
 			<div class="flex flex-row gap-4 items-center">
 				{
 					quickLinks.map((link, index) => (
@@ -31,70 +32,178 @@ const quickLinks = [
 					))
 				}
 			</div>
-			<div class="m-1 aspect-square h-9 flex items-center justify-center bg-primary rounded-full">
+			<a href="https://github.com" target="_blank" rel="noopener noreferrer"
+				class="m-1 aspect-square h-9 flex items-center justify-center bg-primary rounded-full hover:opacity-80 transition-opacity"
+			>
 				<Github size={18} />
-			</div>
+			</a>
 		</div>
-		<div class="flex flex-row gap-2 items-center bg-card border-border border  px-3 rounded-full h-11">
+
+		<!-- Desktop Search -->
+		<div class="hidden md:flex flex-row gap-2 items-center bg-card border-border border px-3 rounded-full h-11">
 			<Search size={20} />
-			<input
-				class="text-sm border-none outline-none bg-transparent placeholder-black focus:ring-0 px-3"
-				placeholder="Search topic...."
-				type="text"
-				name="search"
-				id="search"
-			/>
+			<form id="desktop-search-form" class="w-full" onsubmit="handleGlobalSearch(event)">
+				<input
+					class="text-sm border-none outline-none bg-transparent placeholder-black focus:ring-0 px-3"
+					placeholder="Search topic...."
+					type="text"
+					name="query"
+				/>
+			</form>
 		</div>
-		<button id="theme-toggle" class="flex items-center justify-center w-11 h-11 bg-card border-border border rounded-full hover:bg-primary/10 transition-colors">
-			<Sun id="sun-icon" size={20} class="block" />
-			<Moon id="moon-icon" size={20} class="hidden" />
-		</button>
-		<div class=""></div>
+
+		<!-- Mobile Buttons -->
+		<div class="md:hidden flex items-center gap-2">
+			<button 
+				id="mobile-search-toggle"
+				class="flex items-center justify-center w-10 h-10 bg-primary rounded-full hover:opacity-80 transition-opacity"
+				type="button"
+			>
+				<Search size={18} />
+			</button>
+			<button 
+				id="menu-toggle"
+				class="flex items-center justify-center w-10 h-10 border-black/30 border rounded-full hover:opacity-80 transition-opacity"
+				type="button"
+			>
+				<Menu id="menu-icon" size={20} />
+				<X id="close-icon" size={20} class="hidden" />
+			</button>
+		</div>
 	</nav>
+
+	<!-- Mobile Search Bar (Hidden by default) -->
+	<div id="mobile-search-bar" class="hidden md:hidden px-3 py-2 border-t border-[rgb(245,175,175)]/20">
+		<div class="flex flex-row gap-2 items-center bg-card border-[rgb(220,100,100)]/30 border px-3 rounded-full h-10">
+			<Search size={18} class="text-[rgb(220,100,100)] flex-shrink-0" />
+			<form id="mobile-search-form" class="w-full" onsubmit="handleGlobalSearch(event)">
+				<input
+					class="text-sm border-none outline-none bg-transparent placeholder-stone-500 focus:ring-0 w-full"
+					placeholder="Search topic..."
+					type="text"
+					name="query"
+				/>
+			</form>
+		</div>
+	</div>
+
+	<!-- Mobile Navigation Menu (Hidden by default) -->
+	<div id="mobile-menu" class="hidden md:hidden border-t border-[rgb(245,175,175)]/20">
+		<div class="flex flex-col gap-2 px-4 py-4">
+			{
+				quickLinks.map((link) => (
+					<a
+						href={link.href}
+						class="px-4 py-3 rounded-lg text-stone-800 hover:bg-[rgb(245,175,175)]/50 transition-colors font-medium"
+					>
+						{link.name}
+					</a>
+				))
+			}
+			<a
+				href="https://github.com"
+				target="_blank"
+				rel="noopener noreferrer"
+				class="px-4 py-3 rounded-lg bg-[rgb(220,100,100)] text-white hover:bg-[rgb(200,70,70)] transition-colors font-medium flex items-center gap-2"
+			>
+				<Github size={18} />
+				GitHub
+			</a>
+		</div>
+	</div>
 </header>
 
-<script>
+<script is:inline>
+	function handleGlobalSearch(event) {
+		event.preventDefault();
+		const form = event.target;
+		const query = form.querySelector('input[name="query"]').value.trim();
+		if (query) {
+			window.location.href = `/search?query=${encodeURIComponent(query)}`;
+		}
+	}
+
+	// Mobile Menu Toggle
+	const menuToggle = document.getElementById("menu-toggle");
+	const mobileMenu = document.getElementById("mobile-menu");
+	const menuIcon = document.getElementById("menu-icon");
+	const closeIcon = document.getElementById("close-icon");
+	const mobileSearchToggle = document.getElementById("mobile-search-toggle");
+	const mobileSearchBar = document.getElementById("mobile-search-bar");
+
+	if (menuToggle && mobileMenu) {
+		menuToggle.addEventListener("click", () => {
+			mobileMenu.classList.toggle("hidden");
+			menuIcon.classList.toggle("hidden");
+			closeIcon.classList.toggle("hidden");
+		});
+
+		// Close menu when clicking on a link
+		const menuLinks = mobileMenu.querySelectorAll("a");
+		menuLinks.forEach((link) => {
+			link.addEventListener("click", () => {
+				mobileMenu.classList.add("hidden");
+				menuIcon.classList.remove("hidden");
+				closeIcon.classList.add("hidden");
+			});
+		});
+	}
+
+	// Mobile Search Toggle
+	if (mobileSearchToggle && mobileSearchBar) {
+		mobileSearchToggle.addEventListener("click", () => {
+			mobileSearchBar.classList.toggle("hidden");
+			if (!mobileSearchBar.classList.contains("hidden")) {
+				const searchInput = mobileSearchBar.querySelector('input[name="query"]');
+				searchInput?.focus();
+			}
+		});
+	}
+
 	function initTheme() {
 		const htmlElement = document.documentElement;
-		const themeToggle = document.getElementById('theme-toggle');
-		const sunIcon = document.getElementById('sun-icon');
-		const moonIcon = document.getElementById('moon-icon');
+		const themeToggle = document.getElementById("theme-toggle");
+		const sunIcon = document.getElementById("sun-icon");
+		const moonIcon = document.getElementById("moon-icon");
 
 		// Get saved theme or check system preference
-		const savedTheme = localStorage.getItem('theme');
-		const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-		const isDark = savedTheme === 'dark' || (savedTheme === null && prefersDark);
+		const savedTheme = localStorage.getItem("theme");
+		const prefersDark = window.matchMedia(
+			"(prefers-color-scheme: dark)",
+		).matches;
+		const isDark =
+			savedTheme === "dark" || (savedTheme === null && prefersDark);
 
 		// Apply initial theme
 		if (isDark) {
-			htmlElement.classList.add('dark');
-			sunIcon?.classList.add('hidden');
-			moonIcon?.classList.remove('hidden');
+			htmlElement.classList.add("dark");
+			sunIcon?.classList.add("hidden");
+			moonIcon?.classList.remove("hidden");
 		} else {
-			htmlElement.classList.remove('dark');
-			sunIcon?.classList.remove('hidden');
-			moonIcon?.classList.add('hidden');
+			htmlElement.classList.remove("dark");
+			sunIcon?.classList.remove("hidden");
+			moonIcon?.classList.add("hidden");
 		}
 
 		// Theme toggle handler
-		themeToggle?.addEventListener('click', () => {
-			const isDarkMode = htmlElement.classList.contains('dark');
+		themeToggle?.addEventListener("click", () => {
+			const isDarkMode = htmlElement.classList.contains("dark");
 
 			if (isDarkMode) {
-				htmlElement.classList.remove('dark');
-				localStorage.setItem('theme', 'light');
-				sunIcon?.classList.remove('hidden');
-				moonIcon?.classList.add('hidden');
+				htmlElement.classList.remove("dark");
+				localStorage.setItem("theme", "light");
+				sunIcon?.classList.remove("hidden");
+				moonIcon?.classList.add("hidden");
 			} else {
-				htmlElement.classList.add('dark');
-				localStorage.setItem('theme', 'dark');
-				sunIcon?.classList.add('hidden');
-				moonIcon?.classList.remove('hidden');
+				htmlElement.classList.add("dark");
+				localStorage.setItem("theme", "dark");
+				sunIcon?.classList.add("hidden");
+				moonIcon?.classList.remove("hidden");
 			}
 		});
 	}
 
 	// Initialize theme on page load and on navigation
 	initTheme();
-	document.addEventListener('astro:after-swap', initTheme);
+	document.addEventListener("astro:after-swap", initTheme);
 </script>

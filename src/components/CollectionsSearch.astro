@@ -1,0 +1,57 @@
+---
+import { Search } from "@lucide/astro";
+---
+
+<div
+	class="flex flex-row gap-2 items-center bg-card px-4 rounded-full h-12 max-w-[500px] w-full mx-auto hover:border-[rgb(220,100,100)] transition-colors"
+>
+	<Search size={20} />
+	<input
+		class="text-sm flex-1 border-none outline-none bg-transparent placeholder-gray-400 focus:ring-0"
+		placeholder="Search collections..."
+		type="text"
+		name="search"
+		id="collections-search"
+	/>
+</div>
+
+<script is:inline>
+	function setupCollectionsSearch() {
+		const searchInput = document.getElementById('collections-search');
+		const collectionsGrid = document.getElementById('collections-grid');
+
+		if (!searchInput || !collectionsGrid) return;
+
+		searchInput.addEventListener('input', function() {
+			const searchTerm = this.value.toLowerCase().trim();
+			const cards = collectionsGrid.querySelectorAll('.collection-card');
+			let visibleCount = 0;
+
+			cards.forEach(card => {
+				const title = card.getAttribute('data-collection-title') || '';
+				const description = card.getAttribute('data-collection-description') || '';
+				const matches = !searchTerm || title.includes(searchTerm) || description.includes(searchTerm);
+
+				card.classList.toggle('hidden', !matches);
+				if (matches) visibleCount++;
+			});
+
+			let emptyMsg = collectionsGrid.querySelector('[data-empty-message]');
+			if (visibleCount === 0 && searchTerm) {
+				if (!emptyMsg) {
+					emptyMsg = document.createElement('div');
+					emptyMsg.setAttribute('data-empty-message', 'true');
+					emptyMsg.className = 'col-span-full text-center py-12';
+					collectionsGrid.appendChild(emptyMsg);
+				}
+				emptyMsg.innerHTML = `<p class="text-gray-500 text-lg">No collections found matching "${searchTerm}"</p>`;
+			} else if (emptyMsg) {
+				emptyMsg.remove();
+			}
+		});
+	}
+
+	document.readyState === 'loading' 
+		? document.addEventListener('DOMContentLoaded', setupCollectionsSearch)
+		: setupCollectionsSearch();
+</script>
