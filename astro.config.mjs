@@ -8,7 +8,8 @@ import tailwindcss from '@tailwindcss/vite';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://kzares-dev.github.io',
+  base: '/kzares-dev/',
+  site: 'https://kzares-dev.github.io/kzares-dev',
   integrations: [mdx(), sitemap()],
   output: 'static',
   markdown: {
