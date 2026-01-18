@@ -26,8 +26,14 @@ for (const collection of collections) {
 	);
 }
 
-// Get the first collection as default
-const firstCollectionId = collections.length > 0 ? collections[0].id.replace(".md", "") : "";
+// Get the slug from URL if present
+const urlPath = Astro.url.pathname;
+const pathParts = urlPath.split("/").filter(p => p);
+const slugFromUrl = pathParts[pathParts.length - 1];
+
+// Validate if slug corresponds to an existing collection
+const isValidSlug = slugFromUrl && collections.some(c => c.id.replace(".md", "") === slugFromUrl);
+const activeCollectionId = isValidSlug ? slugFromUrl : (collections.length > 0 ? collections[0].id.replace(".md", "") : "");
 ---
 
 <Layout>
@@ -60,7 +66,7 @@ const firstCollectionId = collections.length > 0 ? collections[0].id.replace(".m
 								<button
 									data-collection-id={collectionId}
 									class={`w-full text-left px-4 py-3  border transition-all duration-200 collection-btn ${
-										collectionId === firstCollectionId
+										collectionId === activeCollectionId
 											? "bg-primary/10 border-primary text-primary font-semibold"
 											: "border-border/20 text-foreground hover:bg-card/50 hover:border-primary/30"
 									}`}
@@ -91,7 +97,7 @@ const firstCollectionId = collections.length > 0 ? collections[0].id.replace(".m
 										data-collection-id={collectionId}
 										data-mobile-btn={collectionId}
 										class={`w-full text-left px-4 py-3 border transition-all duration-200 collection-btn-mobile ${
-											collectionId === firstCollectionId
+											collectionId === activeCollectionId
 												? "bg-primary/10 border-primary text-primary font-semibold"
 												: "border-border/20 text-foreground hover:bg-card/50 hover:border-primary/30"
 										}`}
@@ -114,7 +120,7 @@ const firstCollectionId = collections.length > 0 ? collections[0].id.replace(".m
 						return (
 							<div
 								data-collection-content={collectionId}
-								class={`collection-content ${collectionId === firstCollectionId ? "block" : "hidden"}`}
+								class={`collection-content ${collectionId === activeCollectionId ? "block" : "hidden"}`}
 								id={`content-${collectionId}`}
 							>
 								{/* Mobile Back Button */}
@@ -190,18 +196,26 @@ const firstCollectionId = collections.length > 0 ? collections[0].id.replace(".m
 	<Footer />
 </Layout>
 
-<script>
+<script define:vars={{ activeCollectionId }}>
 	document.addEventListener("DOMContentLoaded", () => {
 		const collectionBtns = document.querySelectorAll(".collection-btn");
 		const collectionBtnsMobile = document.querySelectorAll(".collection-btn-mobile");
 		const collectionContents = document.querySelectorAll(".collection-content");
 		const mobileCollectionsScreen = document.getElementById("mobile-collections-screen");
 
-		// Initialize: Hide collection content on mobile on first load
+		// Initialize: Hide collection content on mobile on first load (unless coming from URL slug)
 		if (window.innerWidth < 768) {
 			collectionContents.forEach((content) => {
-				content.classList.add("hidden");
-				content.classList.remove("block");
+				// If URL has activeCollectionId, show that content
+				// Otherwise hide all content
+				if (content.dataset.collectionContent !== activeCollectionId) {
+					content.classList.add("hidden");
+					content.classList.remove("block");
+				} else {
+					content.classList.remove("hidden");
+					content.classList.add("block");
+					mobileCollectionsScreen.classList.add("hidden");
+				}
 			});
 		}
 
@@ -237,6 +251,9 @@ const firstCollectionId = collections.length > 0 ? collections[0].id.replace(".m
 					mobileCollectionsScreen.classList.add("hidden");
 				}
 
+				// Update URL
+				window.history.pushState({}, "", `/collections/${collectionId}/`);
+
 				// Scroll to top
 				window.scrollTo({ top: 0, behavior: "smooth" });
 			});
@@ -253,6 +270,8 @@ const firstCollectionId = collections.length > 0 ? collections[0].id.replace(".m
 						content.classList.add("hidden");
 						content.classList.remove("block");
 					});
+					// Update URL to base collections path
+					window.history.pushState({}, "", `/collections/`);
 					window.scrollTo({ top: 0, behavior: "smooth" });
 				}
 			});
@@ -265,8 +284,7 @@ const firstCollectionId = collections.length > 0 ? collections[0].id.replace(".m
 				mobileCollectionsScreen.classList.add("hidden");
 				collectionContents.forEach((content) => {
 					const contentId = content.dataset.collectionContent;
-					const firstId = document.querySelector(".collection-btn")?.dataset.collectionId;
-					if (contentId === firstId) {
+					if (contentId === activeCollectionId) {
 						content.classList.remove("hidden");
 						content.classList.add("block");
 					}
