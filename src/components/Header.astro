@@ -1,5 +1,6 @@
 ---
-import { Github, Search, Menu, X, Moon, Sun } from "@lucide/astro";
+import { Github, Search, Menu, X, Moon, Sun, FileText, Folder } from "@lucide/astro";
+import { getCollection } from "astro:content";
 import { SITE_TITLE } from "../consts";
 import HeaderLink from "./HeaderLink.astro";
 
@@ -9,6 +10,33 @@ const quickLinks = [
 	{ name: "Posts", href: "/blog" },
 	{ name: "About", href: "/about" },
 ];
+
+// Get all posts and collections for search
+const posts = (await getCollection("blog")).sort(
+	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+
+const collections = (await getCollection("category")).sort((a, b) =>
+	a.data.title.localeCompare(b.data.title),
+);
+
+// Prepare search data
+const searchData = {
+	posts: posts.map((post) => ({
+		id: post.id,
+		title: post.data.title,
+		description: post.data.description,
+		collection: post.data.collection,
+		pubDate: post.data.pubDate.toISOString(),
+		href: `/blog/${post.id}/`,
+	})),
+	collections: collections.map((col) => ({
+		id: col.id.replace(".md", ""),
+		title: col.data.title,
+		description: col.data.description,
+		href: `/collections/${col.id.replace(".md", "")}/`,
+	})),
+};
 ---
 
 <header class="w-full py-4 md:py-6 sticky top-0 bg-background backdrop-blur-md z-50">
@@ -40,16 +68,9 @@ const quickLinks = [
 		</div>
 
 		<!-- Desktop Search -->
-		<div class="hidden md:flex flex-row gap-2 items-center bg-card border-border border px-3 rounded-full h-11">
+		<div class="hidden md:flex w-60 flex-row gap-2 items-center bg-card border-border border px-3 rounded-full h-11 cursor-pointer hover:border-primary/50 transition-colors" id="desktop-search-trigger">
 			<Search size={20} />
-			<form id="desktop-search-form" class="w-full" onsubmit="handleGlobalSearch(event)">
-				<input
-					class="text-sm border-none outline-none bg-transparent placeholder-black focus:ring-0 px-3"
-					placeholder="Search topic...."
-					type="text"
-					name="query"
-				/>
-			</form>
+			<span class="text-sm text-muted-foreground">Search topic....</span>
 		</div>
 
 		<!-- Mobile Buttons -->
@@ -74,16 +95,9 @@ const quickLinks = [
 
 	<!-- Mobile Search Bar (Hidden by default) -->
 	<div id="mobile-search-bar" class="hidden md:hidden px-3 py-2 border-t border-[rgb(245,175,175)]/20">
-		<div class="flex flex-row gap-2 items-center bg-card border-[rgb(220,100,100)]/30 border px-3 rounded-full h-10">
+		<div class="flex flex-row gap-2 items-center bg-card border-[rgb(220,100,100)]/30 border px-3 rounded-full h-10 cursor-pointer" id="mobile-search-trigger">
 			<Search size={18} class="text-[rgb(220,100,100)] flex-shrink-0" />
-			<form id="mobile-search-form" class="w-full" onsubmit="handleGlobalSearch(event)">
-				<input
-					class="text-sm border-none outline-none bg-transparent placeholder-stone-500 focus:ring-0 w-full"
-					placeholder="Search topic..."
-					type="text"
-					name="query"
-				/>
-			</form>
+			<span class="text-sm text-stone-500">Search topic...</span>
 		</div>
 	</div>
 
@@ -112,6 +126,195 @@ const quickLinks = [
 		</div>
 	</div>
 </header>
+
+{/* Search Modal */}
+<div id="search-modal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm overflow-y-auto">
+	<div class="flex items-start justify-center pt-12 md:pt-20 px-4 min-h-screen">
+		<div class="w-full max-w-2xl bg-background rounded-xl shadow-2xl border border-border/20 overflow-hidden">
+			{/* Search Input */}
+			<div class="sticky top-0 bg-background p-6 border-b border-border/20">
+				<div class="flex items-center gap-3 bg-card border border-border/30 rounded-lg px-4 py-3">
+					<Search size={20} class="text-primary flex-shrink-0" />
+					<input
+						id="search-input"
+						type="text"
+						placeholder="Search collections and articles..."
+						class="flex-1 border-none outline-none bg-transparent text-foreground focus:ring-0"
+						autocomplete="off"
+					/>
+					<button id="search-close-btn" class="text-muted-foreground hover:text-foreground transition-colors">
+						<X size={20} />
+					</button>
+				</div>
+			</div>
+
+			{/* Search Results */}
+			<div id="search-results" class="max-h-[600px] overflow-y-auto">
+				{/* Collections Section */}
+				<div id="collections-section" class="hidden border-b border-border/20">
+					<div class="px-6 pt-4 pb-3">
+						<div class="flex items-center gap-2 mb-4">
+							<Folder size={18} class="text-primary" />
+							<h3 class="text-sm font-bold uppercase tracking-wider text-muted-foreground">Collections</h3>
+							<span id="collections-count" class="text-xs font-semibold bg-primary/10 text-primary px-2 py-1 rounded"></span>
+						</div>
+						<div id="collections-list" class="space-y-2"></div>
+					</div>
+				</div>
+
+				{/* Articles Section */}
+				<div id="articles-section" class="hidden">
+					<div class="px-6 pt-4 pb-3">
+						<div class="flex items-center gap-2 mb-4">
+							<FileText size={18} class="text-primary" />
+							<h3 class="text-sm font-bold uppercase tracking-wider text-muted-foreground">Articles</h3>
+							<span id="articles-count" class="text-xs font-semibold bg-primary/10 text-primary px-2 py-1 rounded"></span>
+						</div>
+						<div id="articles-list" class="space-y-2"></div>
+					</div>
+				</div>
+
+				{/* No Results */}
+				<div id="no-results" class="hidden px-6 py-12 text-center">
+					<Search size={48} class="mx-auto text-muted-foreground/30 mb-4" />
+					<p class="text-muted-foreground">No results found. Try a different search term.</p>
+				</div>
+
+				{/* Initial State */}
+				<div id="initial-state" class="px-6 py-12 text-center">
+					<Search size={48} class="mx-auto text-muted-foreground/30 mb-4" />
+					<p class="text-muted-foreground">Start typing to search for collections and articles...</p>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script is:inline define:vars={{ searchData }}>
+	const searchModal = document.getElementById("search-modal");
+	const searchInput = document.getElementById("search-input");
+	const searchCloseBtn = document.getElementById("search-close-btn");
+	const desktopSearchTrigger = document.getElementById("desktop-search-trigger");
+	const mobileSearchTrigger = document.getElementById("mobile-search-trigger");
+
+	// Open modal
+	function openSearchModal() {
+		searchModal.classList.remove("hidden");
+		searchInput.focus();
+	}
+
+	// Close modal
+	function closeSearchModal() {
+		searchModal.classList.add("hidden");
+		searchInput.value = "";
+		performSearch("");
+	}
+
+	// Event listeners for opening modal
+	desktopSearchTrigger?.addEventListener("click", openSearchModal);
+	mobileSearchTrigger?.addEventListener("click", openSearchModal);
+	searchCloseBtn?.addEventListener("click", closeSearchModal);
+
+	// Close on Escape key
+	document.addEventListener("keydown", (e) => {
+		if (e.key === "Escape") {
+			closeSearchModal();
+		}
+		if (e.key === "/" && !searchModal.classList.contains("hidden") === false) {
+			e.preventDefault();
+			openSearchModal();
+		}
+	});
+
+	// Close on backdrop click
+	searchModal?.addEventListener("click", (e) => {
+		if (e.target === searchModal) {
+			closeSearchModal();
+		}
+	});
+
+	// Search functionality
+	function performSearch(query) {
+		const searchTerm = query.toLowerCase().trim();
+
+		const collectionsSection = document.getElementById("collections-section");
+		const articlesSection = document.getElementById("articles-section");
+		const noResults = document.getElementById("no-results");
+		const initialState = document.getElementById("initial-state");
+		const collectionsList = document.getElementById("collections-list");
+		const articlesList = document.getElementById("articles-list");
+		const collectionsCount = document.getElementById("collections-count");
+		const articlesCount = document.getElementById("articles-count");
+
+		// Reset visibility
+		collectionsSection.classList.add("hidden");
+		articlesSection.classList.add("hidden");
+		noResults.classList.add("hidden");
+		initialState.classList.add("hidden");
+
+		if (!searchTerm) {
+			initialState.classList.remove("hidden");
+			return;
+		}
+
+		// Filter collections
+		const filteredCollections = searchData.collections.filter(
+			(col) =>
+				col.title.toLowerCase().includes(searchTerm) ||
+				col.description.toLowerCase().includes(searchTerm)
+		);
+
+		// Filter articles
+		const filteredArticles = searchData.posts.filter(
+			(post) =>
+				post.title.toLowerCase().includes(searchTerm) ||
+				post.description.toLowerCase().includes(searchTerm)
+		);
+
+		// Show results
+		if (filteredCollections.length === 0 && filteredArticles.length === 0) {
+			noResults.classList.remove("hidden");
+			return;
+		}
+
+		// Render collections
+		if (filteredCollections.length > 0) {
+			collectionsSection.classList.remove("hidden");
+			collectionsCount.textContent = filteredCollections.length;
+			collectionsList.innerHTML = filteredCollections
+				.map(
+					(col) => `
+						<a href="${col.href}" class="block px-4 py-3 rounded-lg hover:bg-primary/10 transition-colors group">
+							<div class="font-semibold text-foreground group-hover:text-primary transition-colors">${col.title}</div>
+							<div class="text-xs text-muted-foreground line-clamp-1 mt-1">${col.description}</div>
+						</a>
+					`
+				)
+				.join("");
+		}
+
+		// Render articles
+		if (filteredArticles.length > 0) {
+			articlesSection.classList.remove("hidden");
+			articlesCount.textContent = filteredArticles.length;
+			articlesList.innerHTML = filteredArticles
+				.map(
+					(post) => `
+						<a href="${post.href}" class="block px-4 py-3 rounded-lg hover:bg-primary/10 transition-colors group">
+							<div class="font-semibold text-foreground group-hover:text-primary transition-colors">${post.title}</div>
+							<div class="text-xs text-muted-foreground line-clamp-1 mt-1">${post.description}</div>
+						</a>
+					`
+				)
+				.join("");
+		}
+	}
+
+	// Search input event listener
+	searchInput?.addEventListener("input", (e) => {
+		performSearch(e.target.value);
+	});
+</script>
 
 <script is:inline>
 	function handleGlobalSearch(event) {

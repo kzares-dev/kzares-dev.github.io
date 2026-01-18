@@ -6,7 +6,15 @@ import BaseHead from "../components/BaseHead.astro";
 import Footer from "../components/Footer.astro";
 import FormattedDate from "../components/FormattedDate.astro";
 import Header from "../components/Header.astro";
-import { Calendar, ChevronRight } from "@lucide/astro";
+import {
+	Calendar,
+	ChevronRight,
+	Share2,
+	Twitter,
+	Linkedin,
+	Mail,
+	Copy,
+} from "@lucide/astro";
 type Props = CollectionEntry<"blog">["data"] & { collection?: string };
 import "../styles/global.css";
 import Layout from "./Layout.astro";
@@ -14,7 +22,6 @@ import Layout from "./Layout.astro";
 const { title, description, pubDate, updatedDate, heroImage, collection } =
 	Astro.props;
 
-// Obtener la información de la colección si existe
 let collectionInfo = null;
 let relatedPosts: CollectionEntry<"blog">[] = [];
 if (collection) {
@@ -24,7 +31,6 @@ if (collection) {
 	);
 	collectionInfo = coll?.data;
 
-	// Obtener otros posts de la misma colección
 	const posts = await getCollection("blog");
 	relatedPosts = posts
 		.filter(
@@ -37,7 +43,7 @@ if (collection) {
 
 <Layout>
 	<Header />
-	<main class="min-h-screen bg-background">
+	<main class="min-h-screen bg-background px-4 md:px-0">
 		<div class="py-12 lg:py-6">
 			<div class="grid grid-cols-1 lg:grid-cols-4 gap-8 lg:gap-12">
 				{/* Main Article */}
@@ -76,15 +82,21 @@ if (collection) {
 						}
 
 						{/* Metadata */}
-						<div class="flex flex-col sm:flex-row sm:items-center gap-4 pb-6 border-b border-border/20 mb-8">
-							<div class="flex items-center gap-3 text-muted-foreground">
+						<div
+							class="flex flex-col sm:flex-row sm:items-center gap-4 pb-6 border-b border-border/20 mb-8"
+						>
+							<div
+								class="flex items-center gap-3 text-muted-foreground"
+							>
 								<Calendar size={18} class="text-primary" />
 								<FormattedDate date={pubDate} />
 							</div>
 							{
 								updatedDate && (
 									<div class="flex items-center gap-2 text-sm text-muted-foreground pl-0 sm:pl-4 sm:border-l border-border/20">
-										<span class="text-xs uppercase tracking-wider font-semibold">Updated:</span>
+										<span class="text-xs uppercase tracking-wider font-semibold">
+											Updated:
+										</span>
 										<FormattedDate date={updatedDate} />
 									</div>
 								)
@@ -92,86 +104,138 @@ if (collection) {
 						</div>
 
 						{/* Title */}
-						<h1 class="text-4xl md:text-5xl font-bold mb-8 leading-tight text-foreground">
+						<h1
+							class="text-4xl md:text-5xl font-bold mb-8 leading-tight text-foreground"
+						>
 							{title}
 						</h1>
 
 						{/* Article Content */}
-						<div class="prose prose-lg max-w-none prose-headings:font-bold prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-code:bg-card/50 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-img:rounded-lg prose-img:shadow-md">
+						<div
+							class="prose prose-lg max-w-none prose-headings:font-bold prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-code:bg-card/50 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-img:rounded-lg prose-img:shadow-md"
+						>
 							<slot />
 						</div>
 					</div>
 				</article>
 
-				<aside class="lg:col-span-1">
+				<aside class="lg:col-span-1 mt-20 md:mt-0">
 					<div class="space-y-6 sticky top-24">
-						{/* Related Posts Card */}
 						{
 							relatedPosts.length > 0 && (
-								<div class="bg-card/50 border border-border/20 p-6  hover:shadow-md transition-shadow duration-300">
-									<h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+								<div>
+									<h3 class="text-xl font-bold mb-4 flex items-center gap-2">
 										<span class="w-1 h-6 bg-primary rounded-full" />
 										More from this collection
 									</h3>
-									<div class="space-y-3">
-										{relatedPosts.map((post) => (
-											<a
-												href={`/blog/${post.id}/`}
-												class="group flex items-start gap-3 p-3 rounded-lg hover:bg-primary/10 transition-all duration-200"
-											>
-												<div class="flex-shrink-0 mt-1 text-primary group-hover:translate-x-1 transition-transform duration-200">
-													<ChevronRight size={18} />
-												</div>
-												<div class="flex-1 min-w-0">
-													<div class="font-semibold text-foreground group-hover:text-primary transition-colors duration-200 line-clamp-2 text-sm">
-														{post.data.title}
+									<div class="grid grid-cols-1 gap-4">
+										{relatedPosts
+											.slice(0, 3)
+											.map((post) => (
+												<a
+													href={`/blog/${post.id}/`}
+													class="group relative overflow-hidden border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-300 bg-background hover:bg-background"
+												>
+													{/* Image Container */}
+													{post.data.heroImage && (
+														<div class="relative w-full h-48 overflow-hidden bg-gradient-to-br from-primary/20 to-primary/10">
+															<Image
+																width={400}
+																height={300}
+																src={
+																	post.data
+																		.heroImage
+																}
+																alt={
+																	post.data
+																		.title
+																}
+																class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+															/>
+															<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+														</div>
+													)}
+
+													{/* Content Overlay */}
+													<div class="p-4">
+														<h4 class="font-semibold text-sm leading-tight text-foreground group-hover:text-primary transition-colors duration-200 line-clamp-2 mb-2">
+															{post.data.title}
+														</h4>
+														<p class="text-xs text-muted-foreground line-clamp-2 mb-3">
+															{
+																post.data
+																	.description
+															}
+														</p>
+														<div class="flex items-center justify-between">
+															<time class="text-xs text-muted-foreground">
+																{new Date(
+																	post.data
+																		.pubDate,
+																).toLocaleDateString(
+																	"en-US",
+																	{
+																		month: "short",
+																		day: "numeric",
+																		year: "numeric",
+																	},
+																)}
+															</time>
+															<ChevronRight
+																size={16}
+																class="text-primary group-hover:translate-x-1 transition-transform duration-200"
+															/>
+														</div>
 													</div>
-													<div class="text-xs text-muted-foreground mt-1">
-														{new Date(
-															post.data.pubDate,
-														).toLocaleDateString("en-US", {
-															month: "short",
-															day: "numeric",
-														})}
-													</div>
-												</div>
-											</a>
-										))}
+												</a>
+											))}
 									</div>
 								</div>
 							)
 						}
-
-						{/* Collection Info Card */}
-						{
-							collectionInfo && (
-								<div class="bg-card/50 border border-border/20 p-6  hover:shadow-md transition-shadow duration-300">
-									<div class="flex items-center gap-2 mb-4">
-										<span class="w-1 h-6 bg-primary rounded-full" />
-										<h3 class="text-lg font-bold">{collectionInfo.title}</h3>
-									</div>
-									<p class="text-sm text-muted-foreground leading-relaxed mb-4">
-										{collectionInfo.description}
-									</p>
-									<a
-										href={`/collections/${collection}/`}
-										class="inline-flex items-center gap-2 text-primary font-semibold text-sm hover:gap-3 transition-all duration-200 group"
-									>
-										View all articles
-										<ChevronRight size={16} class="group-hover:translate-x-1 transition-transform duration-200" />
-									</a>
-								</div>
-							)
-						}
-
-						{/* Share Section */}
-						<div class="bg-gradient-to-br from-primary/10 to-primary/5 p-6 text-center">
-							<p class="text-sm font-semibold text-foreground mb-3">
-								Found this helpful?
+						<div
+							class="bg-card p-6 border border-border/20"
+						>
+							<p
+								class="text-sm font-semibold text-foreground mb-4 flex items-center gap-2"
+							>
+								<Share2 size={18} class="text-primary" />
+								Share this article
 							</p>
-							<p class="text-xs text-muted-foreground">
-								Share this article with your network
-							</p>
+							<div class="grid grid-cols-2 gap-2">
+								<button
+									data-share="twitter"
+									class="flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-blue-500/20 hover:bg-blue-500/30 text-blue-600 text-sm font-medium transition-all duration-200"
+									title="Share on Twitter"
+								>
+									<Twitter size={16} />
+									<span class="text-xs">Twitter</span>
+								</button>
+								<button
+									data-share="linkedin"
+									class="flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-blue-600/20 hover:bg-blue-600/30 text-blue-700 text-sm font-medium transition-all duration-200"
+									title="Share on LinkedIn"
+								>
+									<Linkedin size={16} />
+									<span class="text-xs">LinkedIn</span>
+								</button>
+								<button
+									data-share="email"
+									class="flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-red-500/20 hover:bg-red-500/30 text-red-600 text-sm font-medium transition-all duration-200"
+									title="Share by Email"
+								>
+									<Mail size={16} />
+									<span class="text-xs">Email</span>
+								</button>
+								<button
+									data-share="copy"
+									class="flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-green-500/20 hover:bg-green-500/30 text-green-600 text-sm font-medium transition-all duration-200"
+									title="Copy link"
+								>
+									<Copy size={16} />
+									<span class="text-xs">Copy</span>
+								</button>
+							</div>
 						</div>
 					</div>
 				</aside>
@@ -181,3 +245,55 @@ if (collection) {
 
 	<Footer />
 </Layout>
+
+<script>
+	// Enhanced share functionality
+	document.addEventListener("DOMContentLoaded", () => {
+		const pageTitle =
+			document.querySelector("h1")?.textContent || document.title;
+		const pageUrl = window.location.href;
+
+		const shareButtons = document.querySelectorAll("[data-share]");
+
+		shareButtons.forEach((btn) => {
+			btn.addEventListener("click", (e) => {
+				e.preventDefault();
+				const shareType = btn.dataset.share;
+
+				switch (shareType) {
+					case "twitter":
+						const tweetText = `Check out: ${pageTitle} ${pageUrl}`;
+						window.open(
+							`https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`,
+							"_blank",
+						);
+						break;
+
+					case "linkedin":
+						window.open(
+							`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(pageUrl)}`,
+							"_blank",
+						);
+						break;
+
+					case "email":
+						const subject = `Check this out: ${pageTitle}`;
+						const body = `I thought you might find this interesting: ${pageUrl}`;
+						window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+						break;
+
+					case "copy":
+						navigator.clipboard.writeText(pageUrl).then(() => {
+							const originalHTML = btn.innerHTML;
+							btn.innerHTML =
+								'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg><span class="text-xs">Copied!</span>';
+							setTimeout(() => {
+								btn.innerHTML = originalHTML;
+							}, 2000);
+						});
+						break;
+				}
+			});
+		});
+	});
+</script>

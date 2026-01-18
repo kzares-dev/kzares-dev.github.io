@@ -1,10 +1,12 @@
 ---
 import { getCollection } from "astro:content";
+import { Image } from "astro:assets";
 import Footer from "../../components/Footer.astro";
 import Header from "../../components/Header.astro";
 import Layout from "../../layouts/Layout.astro";
-import CollectionsSearch from "../../components/CollectionsSearch.astro";
-import { Folder, ArrowRight } from "@lucide/astro";
+import FormattedDate from "../../components/FormattedDate.astro";
+import CollectionSection from "../../components/CollectionSection.astro";
+import {BookOpen, Folder, ArrowRight, ChevronRight, ArrowLeft } from "@lucide/astro";
 
 const posts = (await getCollection("blog")).sort(
 	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
@@ -24,100 +26,244 @@ for (const collection of collections) {
 	);
 }
 
-// Color gradients for collections using design system palette
-const gradients = [""];
-
-const getGradient = (index: number) => gradients[index % gradients.length];
+// Get the first collection as default
+const firstCollectionId = collections.length > 0 ? collections[0].id.replace(".md", "") : "";
 ---
 
 <Layout>
 	<Header />
-	<main class="max-w-7xl mx-auto px-4 py-5">
-		<div class="mb-16 text-center">
-			<div
-				class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[rgb(251,239,239)] mb-4"
-			>
-				<Folder size={18} class="text-[rgb(245,175,175)]" />
-				<span class="text-sm font-semibold text-[rgb(245,175,175)]"
-					>Collections</span
-				>
+	<main class="min-h-screen bg-background">
+		<div class="px-4 py-8">
+			{/* Header */}
+			<div class="mb-8 flex items-center justify-center flex-col">
+				<div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 mb-4">
+					<Folder size={18} class="text-primary" />
+					<span class="text-sm font-semibold text-primary">Collections</span>
+				</div>
+				<h1 class="text-5xl sm:text-[5rem] font-bold mb-4 leading-tight">
+					Browse by <span class="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Collections</span>
+				</h1>
 			</div>
-			<h1 class="text-5xl sm:text-6xl font-bold mb-4 leading-tight">
-				Browse by <span
-					class="bg-gradient-to-r from-[rgb(245,175,175)] to-[rgb(220,100,100)] bg-clip-text text-transparent"
-					>Collections</span
-				>
-			</h1>
-			<p class="text-gray-600 text-lg max-w-2xl mx-auto mb-8">
-				Explore our content organized by topics to find exactly what
-				you're looking for
-			</p>
-			<CollectionsSearch />
-		</div>
 
-		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="collections-grid">
-			{
-				collections.map((collection, collectionIdx) => {
-					const collectionId = collection.id.replace(".md", "");
-					const collectionPosts =
-						postsByCollection.get(collectionId) || [];
-
-					return (
-						<div class="relative h-130 -mb-10 collection-card" data-collection-title={collection.data.title.toLowerCase()} data-collection-description={collection.data.description.toLowerCase()}>
-							
-							<a
-								href={`/collections/${collectionId}/`}
-								class={`group relative bg-card z-11 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between p-8 text-stone-800 min-h-84`}
-							>
-								{/* Background accent */}
-								<div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-300" />
-
-								<div class="relative z-10">
-									<h2 class="text-3xl font-bold mb-3  italic text-[rgb(220,100,100)]">
-										{collection.data.title}
-									</h2>
-									<p class="text-stone-900/90">
-										{collection.data.description}
-									</p>
-								</div>
-
-								<div class="relative z-10 flex items-center justify-between pt-6 border-t border-stone-800/20">
-									<div class="text-sm font-semibold text-stone-900">
-										<span class="font-bold text-lg">
-											{collectionPosts.length}
-										</span>
-										<span class="text-stone-900/80 ml-1">
-											{collectionPosts.length === 1
-												? "article"
-												: "articles"}
-										</span>
+			{/* Two Column Layout */}
+			<div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+				{/* Left Column - Collections List */}
+				<aside class="lg:col-span-1 md:block hidden" id="collections-list-screen">
+					<div class="sticky top-24 space-y-2">
+						<h3 class="text-sm font-bold uppercase tracking-wider text-muted-foreground px-3 mb-4">
+							Collections
+						</h3>
+						{collections.map((collection) => {
+							const collectionId = collection.id.replace(".md", "");
+							const collectionPosts = postsByCollection.get(collectionId) || [];
+							return (
+								<button
+									data-collection-id={collectionId}
+									class={`w-full text-left px-4 py-3  border transition-all duration-200 collection-btn ${
+										collectionId === firstCollectionId
+											? "bg-primary/10 border-primary text-primary font-semibold"
+											: "border-border/20 text-foreground hover:bg-card/50 hover:border-primary/30"
+									}`}
+								>
+									<div class="font-semibold text-sm">{collection.data.title}</div>
+									<div class="text-xs text-muted-foreground mt-1">
+										{collectionPosts.length} {collectionPosts.length === 1 ? "article" : "articles"}
 									</div>
-									<div class="group-hover:translate-x-1 transition-transform duration-300">
-										<ArrowRight
-											size={20}
-											class="text-stone-900"
-										/>
-									</div>
-								</div>
-							</a>
+								</button>
+							);
+						})}
+					</div>
+				</aside>
 
-							<div class="flex flex-col bg-primary/70 p-4 space-y-2">
-								{collectionPosts
-									.slice(0, 4)
-									.map((post: any, idx: number) => (
-										<div
-											class="w-full text-sm font-bold"
-										>
-											{post.data.title}
+				{/* Right Column - Collection Posts */}
+				<div class="lg:col-span-3 w-full">
+					{/* Mobile Collections List Screen */}
+					<div id="mobile-collections-screen" class="block md:hidden mb-8">
+						<h3 class="text-sm font-bold uppercase tracking-wider text-muted-foreground px-3 mb-4">
+							Collections
+						</h3>
+						<div class="space-y-2">
+							{collections.map((collection) => {
+								const collectionId = collection.id.replace(".md", "");
+								const collectionPosts = postsByCollection.get(collectionId) || [];
+								return (
+									<button
+										data-collection-id={collectionId}
+										data-mobile-btn={collectionId}
+										class={`w-full text-left px-4 py-3 border transition-all duration-200 collection-btn-mobile ${
+											collectionId === firstCollectionId
+												? "bg-primary/10 border-primary text-primary font-semibold"
+												: "border-border/20 text-foreground hover:bg-card/50 hover:border-primary/30"
+										}`}
+									>
+										<div class="font-semibold text-sm">{collection.data.title}</div>
+										<div class="text-xs text-muted-foreground mt-1">
+											{collectionPosts.length} {collectionPosts.length === 1 ? "article" : "articles"}
 										</div>
-									))}
-							</div>
+									</button>
+								);
+							})}
 						</div>
+					</div>
 
-					);
-				})
-			}
+					{/* Desktop & Mobile Details Screen */}
+					{collections.map((collection) => {
+						const collectionId = collection.id.replace(".md", "");
+						const collectionPosts = postsByCollection.get(collectionId) || [];
+
+						return (
+							<div
+								data-collection-content={collectionId}
+								class={`collection-content ${collectionId === firstCollectionId ? "block" : "hidden"}`}
+								id={`content-${collectionId}`}
+							>
+								{/* Mobile Back Button */}
+								<button
+									id={`back-btn-${collectionId}`}
+									data-back-collection={collectionId}
+									class="md:hidden flex items-center gap-2 mb-6 px-4 py-2 rounded-lg hover:bg-primary/10 transition-colors duration-200"
+								>
+									<ArrowLeft size={18} class="text-primary" />
+									<span class="font-semibold text-sm text-foreground">Back</span>
+								</button>
+
+								{/* Collection Header */}
+							
+<div class="relative bg-gradient-to-br from-[rgb(245,175,175)] via-[rgb(235,150,150)] to-[rgb(220,100,100)] overflow-hidden py-10 px-2 lg:px-10 mb-12 rounded-lg md:rounded-none">
+		<div class="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -mr-40 -mt-40"></div>
+		<div class="absolute bottom-0 left-0 w-64 h-64 bg-white/5 rounded-full -ml-32 -mb-32"></div>
+		
+		{/* Content */}
+		<div class="max-w-7xl mx-auto px-4 relative z-10">
+			<div class="flex items-start gap-6 mb-6">
+				<div class="p-4 bg-white/z20 rounded-xl backdrop-blur-sm">
+					<BookOpen size={32} class="text-white" />
+				</div>
+				<div>
+					<div class="inline-block px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm mb-4">
+						<span class="text-sm font-semibold text-white">Collection</span>
+					</div>
+				</div>
+			</div>
+			
+			<h1 class="text-4xl sm:text-6xl md:text-7xl font-black text-white mb-4 leading-tight">{collection.data.title}</h1>
+			
+			<p class="text-white/80 text-base sm:text-lg max-w-3xl mb-6 leading-relaxed">{collection.data.description}</p>
+			
+			<div class="flex flex-wrap items-center gap-6 pt-6 border-t border-white/20">
+				<div class="flex items-center gap-2">
+					<div class="w-8 h-8 rounded-full bg-white/30 flex items-center justify-center text-white font-bold text-sm">
+						{collectionPosts.length}
+					</div>
+					<span class="text-white/90 font-semibold text-sm sm:text-base">
+						{collectionPosts.length === 1 ? "Article" : "Articles"}
+					</span>
+				</div>
+				<div class="h-6 w-px bg-white/20"></div>
+				<span class="text-white/70 text-xs sm:text-sm">
+					Last updated: {new Date(posts[0]?.data.pubDate || new Date()).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+				</span>
+			</div>
+		</div>
+	</div>
+								{/* Posts Grid */}
+								{collectionPosts.length > 0 ? (
+									<div class="space-y-6">
+										<div class="flex items-center gap-2 mb-8">
+											<div class="w-1 h-8 bg-primary rounded-full" />
+											<h3 class="text-2xl font-bold">{collectionPosts.length} {collectionPosts.length === 1 ? "Article" : "Articles"}</h3>
+										</div>
+										<CollectionSection posts={collectionPosts} />
+									</div>
+								) : (
+									<div class="text-center py-12">
+										<p class="text-muted-foreground">No articles found in this collection.</p>
+									</div>
+								)}
+							</div>
+						);
+					})}
+				</div>
+			</div>
 		</div>
 	</main>
 	<Footer />
 </Layout>
+
+<script>
+	document.addEventListener("DOMContentLoaded", () => {
+		const collectionBtns = document.querySelectorAll(".collection-btn");
+		const collectionBtnsMobile = document.querySelectorAll(".collection-btn-mobile");
+		const collectionContents = document.querySelectorAll(".collection-content");
+		const mobileCollectionsScreen = document.getElementById("mobile-collections-screen");
+
+		// Desktop & Mobile navigation buttons
+		const allBtns = [...collectionBtns, ...collectionBtnsMobile];
+
+		allBtns.forEach((btn) => {
+			btn.addEventListener("click", () => {
+				const collectionId = btn.dataset.collectionId;
+
+				// Update all button styles
+				allBtns.forEach((b) => {
+					b.classList.remove("bg-primary/10", "border-primary", "text-primary", "font-semibold");
+					b.classList.add("border-border/20", "text-foreground", "hover:bg-card/50", "hover:border-primary/30");
+				});
+
+				btn.classList.remove("border-border/20", "text-foreground", "hover:bg-card/50", "hover:border-primary/30");
+				btn.classList.add("bg-primary/10", "border-primary", "text-primary", "font-semibold");
+
+				// Update content visibility
+				collectionContents.forEach((content) => {
+					if (content.dataset.collectionContent === collectionId) {
+						content.classList.remove("hidden");
+						content.classList.add("block");
+					} else {
+						content.classList.remove("block");
+						content.classList.add("hidden");
+					}
+				});
+
+				// Hide collections list on mobile, show content
+				if (window.innerWidth < 768) {
+					mobileCollectionsScreen.classList.add("hidden");
+				}
+
+				// Scroll to top
+				window.scrollTo({ top: 0, behavior: "smooth" });
+			});
+		});
+
+		// Back button functionality
+		const backBtns = document.querySelectorAll("[data-back-collection]");
+		backBtns.forEach((btn) => {
+			btn.addEventListener("click", () => {
+				if (window.innerWidth < 768) {
+					mobileCollectionsScreen.classList.remove("hidden");
+					// Hide all content screens on mobile
+					collectionContents.forEach((content) => {
+						content.classList.add("hidden");
+						content.classList.remove("block");
+					});
+					window.scrollTo({ top: 0, behavior: "smooth" });
+				}
+			});
+		});
+
+		// Handle window resize
+		window.addEventListener("resize", () => {
+			if (window.innerWidth >= 768) {
+				// Show everything on desktop
+				mobileCollectionsScreen.classList.add("hidden");
+				collectionContents.forEach((content) => {
+					const contentId = content.dataset.collectionContent;
+					const firstId = document.querySelector(".collection-btn")?.dataset.collectionId;
+					if (contentId === firstId) {
+						content.classList.remove("hidden");
+						content.classList.add("block");
+					}
+				});
+			}
+		});
+	});
+</script>
