@@ -197,6 +197,14 @@ const firstCollectionId = collections.length > 0 ? collections[0].id.replace(".m
 		const collectionContents = document.querySelectorAll(".collection-content");
 		const mobileCollectionsScreen = document.getElementById("mobile-collections-screen");
 
+		// Initialize: Hide collection content on mobile on first load
+		if (window.innerWidth < 768) {
+			collectionContents.forEach((content) => {
+				content.classList.add("hidden");
+				content.classList.remove("block");
+			});
+		}
+
 		// Desktop & Mobile navigation buttons
 		const allBtns = [...collectionBtns, ...collectionBtnsMobile];
 
@@ -262,6 +270,13 @@ const firstCollectionId = collections.length > 0 ? collections[0].id.replace(".m
 						content.classList.remove("hidden");
 						content.classList.add("block");
 					}
+				});
+			} else {
+				// Hide content on mobile
+				mobileCollectionsScreen.classList.remove("hidden");
+				collectionContents.forEach((content) => {
+					content.classList.add("hidden");
+					content.classList.remove("block");
 				});
 			}
 		});
