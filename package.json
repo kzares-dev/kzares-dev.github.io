@@ -1,7 +1,10 @@
 {
-  "name": "kzares-dev",
+  "name": "portfolio",
   "type": "module",
   "version": "0.0.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
@@ -9,13 +12,11 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/mdx": "^4.3.13",
-    "@astrojs/rss": "^4.0.14",
-    "@astrojs/sitemap": "^3.6.1",
-    "@lucide/astro": "^0.562.0",
-    "@tailwindcss/vite": "^4.1.18",
-    "astro": "^5.16.7",
-    "sharp": "^0.34.3",
-    "tailwindcss": "^4.1.18"
+    "@astrojs/react": "^5.0.7",
+    "@tailwindcss/vite": "^4.3.1",
+    "astro": "^6.4.6",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "tailwindcss": "^4.3.1"
   }
 }
